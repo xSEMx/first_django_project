@@ -1,0 +1,74 @@
+{% extends 'base.html' %}
+	
+{% block extra_css %}
+	{% load static %}
+	<link rel="stylesheet" type="text/css" href="{% static 'css/monitoring_vus/index.css' %}?v=<?= time() ?>">
+{% endblock %}
+
+{% block content %}
+	<div class="form-url-check">
+		<form method='post'>
+			{% csrf_token %}
+		
+			<p>{{ form.errors.url.as_text }}</p> 
+			<label for={{ form.id_for_label }}>{{ form.url.label_tag }}</label>
+			{{ form.url }}
+
+			<input type='submit' value='Проверить'>
+		</form> 
+
+		{% if res != None %}
+	  		<table>
+	    			<tr>
+	      				<td>
+		      				{% if res.status %}
+			      				<p class="positive">Данный url доступен</p>
+		      				{% else %}
+			      				<p class="negative">Данный url недоступен</p>
+		 	     			{% endif %}
+					</td>
+	      				<td>
+						<form action={% url 'evaluations' %} method='POST'>
+							{% csrf_token %}
+						
+							<input type='hidden' name='id' value='start'>
+							<input type='hidden' name='url' value={{ res.url }}>
+							<input type='submit' value='Оценки и отзывы'>
+						</form>			
+					</td>
+				
+		 	 	</tr>
+			</table>
+ 	 	{% endif %}
+	</div>	
+	
+	<div class="famous-sites">
+		{% if sites %}
+			<h2>Популярные сайты</h2>
+		{% endif %}
+		
+		<table>
+			{% for site in sites %}
+				<tr>
+					<td>{{ site }}</td>
+
+					{% if site.status %}
+						<td>Доступен</td>
+					{% else %}
+						<td>Недоступен</td>
+					{% endif %}
+
+					<td>
+						<form action={% url 'evaluations' %} method='POST'>
+							{% csrf_token %}
+						
+							<input type='hidden' name='id' value='start'>
+							<input type='hidden' name='url' value={{ site.url }}>
+							<input type='submit' value='Оценки и отзывы'>
+						</form>
+					</td>
+				</tr>
+			{% endfor %}
+		</table>
+	</div>
+{% endblock %}

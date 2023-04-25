@@ -1,0 +1,12 @@
+{% extends 'base.html' %}
+
+{% block content %}
+	<div class='form-register'>
+		<form method='post'>
+			{% csrf_token %}
+	
+			{{form.as_p}}
+			<input type='hidden' name='next' value={{next}}>
+			<input type='submit'>
+	</div>
+{% endblock %}

@@ -1,0 +1,66 @@
+{% extends 'base.html' %}
+
+{% block content %}
+	{% load static %}
+	<script type="text/javascript" src="{% static 'js/accounts/script.js' %}?v=<?= time() ?>"></script>
+
+	<p>{{ user.username }}</p>
+	
+	<p>Отзывы:</p>
+
+	{% if user_comments %}
+		<button id="toggleBtn" onclick="toggleVisibility()">Показать</button>
+		
+		<div id='content' style='display:none;'>
+			{% for comment in user_comments %}
+				<div id="com_{{ forloop.counter }}">
+					<p>Сайт: {{ comment.site.url }}</p>
+
+					<div id='read'>
+						<p>Оценка: {{ comment.evaluation }}</p>
+						<p>Отзыв: {{ comment.review }}</p>
+					</div>
+					
+					<div id='edit' style="display:none;">
+						<form method="POST">
+							{% csrf_token %}
+							
+							<p>
+								<p>{{ form.errors.evaluation.as_text }}</p>
+								<label for={{ form.id_for_label }}>Оценка:</label>
+								<input type='text' name={{ form.evaluation.name }} value={{ comment.evaluation }}>
+							</p>						
+
+							<p>
+								<p>{{ form.errors.review.as_text }}</p>
+								<label for={{ form.id_for_label }}>Отзыв:</label>
+								<textarea type='text' name={{ form.review.name }}>{{ comment.review }}</textarea>
+							</p>							
+
+							<input type='hidden' name='id' value='comment-edit'>
+							<input type='hidden' name='com_id' value='com_{{ forloop.counter }}'>
+							<input type='hidden' name='url_site' value={{ comment.site.url }}>
+							<input type='submit' value='Сохранить изменения'>
+						</form>
+					</div>
+				</div>
+				<button onclick="makeEditable('com_{{ forloop.counter }}')">Редактировать</button>
+				<form method="POST">
+					{% csrf_token %}
+					
+					<input type='hidden' name='id' value='comment-delete'>
+					<input type='hidden' name='comment_id' value={{ comment.id }}>
+					<input type='submit' value='Удалить'>
+				</form>
+			{% endfor %}
+		</div>
+	{% else %}
+		<p>Вы не оставлили ни одного отзыва</p>
+	{% endif %}
+	
+	<div id="comment-section"
+     		data-errors="{{ errors }}"
+     		data-comments="{{ comments }}"
+     		data-com-id="{{ com_id }}"
+	</div>
+{% endblock %}

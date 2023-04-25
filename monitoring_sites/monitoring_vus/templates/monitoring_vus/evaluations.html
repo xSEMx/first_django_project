@@ -1,0 +1,152 @@
+{% extends 'base.html' %}
+
+{% block extra_css %}
+	{% load static %}
+	<link rel="stylesheet" type="text/css" href="{% static 'css/monitoring_vus/evaluations.css' %}?v=<?= time() ?>">
+{% endblock %}
+
+{% block content %}
+	<div class="url-info">
+		<div class="url">
+			<h1>{{ site }}</h1>
+		</div>
+
+		<div class="url-status">
+			{% if site.status %}
+				<h2>Данный url доступен</h2>
+			{% else %}
+				<h2>Данный url недоступен</h2>
+				<div class="buttons">
+				  <p><button id="telegram-button">Настроить оповещение в Telegram</button></p>
+				  <p><button id="email-button">Настроить оповещение на Email</button></p>
+				</div>
+
+				<div id="modal">
+				  <div id="modal-content">
+				    <span class="close">&times;</span>
+				    <div id="telegram-content" style="display:none">
+				    	<p>Перейдите в нашего <b><a href="http://t.me/not_for_montirong_vus_bot">Telegram бота</a></b>,
+				    	используйте команду <b>/start</b>,
+						<br>если ещё этого не делали, и отправьте ему сообщение: <b>/notific {{ site.id }}</b></p>
+				    </div>
+				    <div id="email-content" style="display:none">
+				        <form method='POST'>
+							{% csrf_token %}
+
+							<p>{{ form_notification.errors.email.as_text }}</p> 
+							<p>
+								<label for={{ form_notification.id_for_label }}>{{ form_notification.email.label_tag }}</label>
+							</p>
+							{{ form_notification.email }}
+
+							<input type='hidden' name="id" value="notification">
+							<input type="hidden" name="url" value={{ site }}>
+							<input type="submit" value="Настроить оповещение">
+						</form>
+				    </div>
+				  </div>
+				</div>
+			{% endif %}
+		</div>
+	</div>
+
+	<div class="new-comment">
+		{% if user.is_authenticated %}
+			{% if not has_comment %}
+				<form id="form-new" method='POST'>
+					{% csrf_token %}
+				
+					<p>{{ form.errors.evaluation.as_text }}</p> 
+					<p><label for={{ form.id_for_label }}>{{ form.evaluation.label_tag }}</label></p>
+					{{ form.evaluation }}
+
+					<p>{{ form.errors.review.as_text }}</p>
+					<p><label for={{ form.id_for_label }}>{{ form.review.label_tag }}</label><p>
+					{{ form.review }}
+					
+					<input type='hidden' name='id' value='comment-new'>
+					<input type='hidden' name='url' value={{ site }}>
+					<input id="form-new-submit" type='submit' value='Написать отзыв'>
+				</form>
+			{% endif %}
+		{% else %}
+			<p><a href="{% url 'login' %}?next={{request.path}}?url={{ url_site }}">Написать отзыв</a></p>
+		{% endif %}
+	</div>
+
+	<div class="comments">
+		{% if comments %}
+			<h3>Оценки и отзывы</h3>
+		{% endif %}
+
+		<div class="user-comment">
+			{% if has_comment %}
+				<h3>Ваш отзыв:</h3>
+				<div id="comment">
+					<div id='read'>
+						<p>Оценка: {{ user_comment.evaluation }}</p>
+						<p>Отзыв: {{ user_comment.review }}</p>
+					</div>
+							
+					<div id='edit' style="display:none;">
+						<form id='form-edit' method="POST">
+							{% csrf_token %}
+									
+							<p>
+								<p>{{ form.errors.evaluation.as_text }}</p>
+								<label for={{ form.id_for_label }}>Оценка:</label>
+								<input type='text' name={{ form.evaluation.name }} value={{ user_comment.evaluation }}>
+							</p>						
+
+							<p>
+								<p>{{ form.errors.review.as_text }}</p>
+								<label for={{ form.id_for_label }}>Отзыв:</label>
+								<textarea type='text' name={{ form.review.name }}>{{ user_comment.review }}</textarea>
+							</p>							
+
+							<input type='hidden' name='id' value='comment-edit'>
+							<input type='hidden' name='url' value={{ site }}>
+							<input id="form-edit-submit" type='submit' value='Сохранить изменения'>
+						</form>
+					</div>
+				</div>
+				<button onclick="makeEditable('comment')">Редактировать</button>
+				<form id="form-delete" method="POST">
+					{% csrf_token %}
+						
+					<input type='hidden' name='id' value='comment-delete'>
+					<input type='hidden' name='comment_id' value={{ user_comment.id }}>
+					<input type='hidden' name='url' value={{ site }}>
+					<input id="form-delete-submit" type='submit' value='Удалить'>
+				</form>
+			{% endif %}
+		</div>
+
+		<div class="other-comments">
+			<ul>		
+			  	{% for comment in comments %}
+			    		<li>Пользователь: {{ comment.get_username }}</li>
+			    		<p>Оценка: {{ comment.evaluation }}</p>
+					{% if comment.review %}
+			    			<p>Отзыв: {{ comment.review }}</p>
+					{% endif %}
+				{% endfor %}
+			</ul>
+			
+			{% if more %}
+				<form method='POST'>
+					{% csrf_token %}
+					
+					<input type='hidden' name='id' value='more'>
+					<input type='hidden' name='url' value={{ site }}>
+					<input type='submit' value='Все отзывы'>				
+				</form>
+			{% endif %}
+		</div>
+	</div>
+
+	<div id="comment-section" data-errors="{{ errors }}"</div>
+
+	{% load static %}
+	<script type="text/javascript" src="{% static 'js/monitoring_vus/evaluations.js' %}?v=<?= time() ?>"></script>
+{% endblock %}
